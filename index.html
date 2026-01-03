@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grocery Price Comparison</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🛒 Grocery Price Comparison</h1>
+  
+  <div id="tabs">
+    <button onclick="showTab('comparison')">Comparison</button>
+    <button onclick="showTab('list')">Grocery List</button>
+  </div>
+
+  <div id="content">
+    <div id="comparison" class="tab-content"></div>
+    <div id="list" class="tab-content" style="display:none;"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

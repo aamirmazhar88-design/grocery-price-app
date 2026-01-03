@@ -1,110 +1,127 @@
 document.addEventListener('DOMContentLoaded', () => {
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv';
 
-  let groceryData = [];
-  let groceryList = [];
+  let apiData = [];
 
-  const storeDropdown = document.getElementById('storeDropdown');
-  const groceryListItems = document.getElementById('groceryListItems');
-  const totalPriceElement = document.getElementById('totalPrice');
-  const clearListBtn = document.getElementById('clearListBtn');
-
-  // Load CSV
   fetch(csvUrl)
     .then(response => response.text())
     .then(data => {
-      const rows = data.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+      const rows = data.split('\n').map(row => row.split(','));
       const headers = rows[0];
       const entries = rows.slice(1).map(row => {
-        const obj = {};
+        let obj = {};
         headers.forEach((header, i) => {
-          obj[header] = row[i] || '';
+          obj[header.trim()] = row[i] ? row[i].trim() : '';
         });
         return obj;
       });
-      groceryData = entries;
+      apiData = entries;
 
-      populateStoreDropdown();
+      renderComparison(entries);
+      populateStoreDropdown(entries);
     })
     .catch(error => console.error('Error loading CSV:', error));
 
-  function populateStoreDropdown() {
-    const storeSet = new Set(groceryData.map(entry => entry['Store Name (Accurate Spelling)']));
-    storeDropdown.innerHTML = '';
-    storeSet.forEach(store => {
-      const option = document.createElement('option');
+  function renderComparison(entries) {
+    const comparisonTable = document.getElementById("comparisonTable").getElementsByTagName("tbody")[0];
+    comparisonTable.innerHTML = "";
+
+    entries.forEach(entry => {
+      const row = comparisonTable.insertRow();
+      row.innerHTML = `
+        <td>${entry["Category"] || ""}</td>
+        <td>${entry["Product Name"] || ""}</td>
+        <td>${entry["Brand (Optional)"] || ""}</td>
+        <td>${entry["Weight Number (Optional)"] || ""} ${entry["Weight (Optional)"] || ""}</td>
+        <td>${entry["Price (CAD)"] ? `$${parseFloat(entry["Price (CAD)"]).toFixed(2)}` : ""}</td>
+        <td>${entry["Store Name (Accurate Spelling)"] || ""}</td>
+        <td>${entry["Store Location (Optional)"] || ""}</td>
+      `;
+    });
+  }
+
+  function populateStoreDropdown(entries) {
+    const selector = document.getElementById("storeSelector");
+    const stores = [...new Set(entries.map(e => e["Store Name (Accurate Spelling)"]).filter(Boolean))];
+
+    stores.forEach(store => {
+      const option = document.createElement("option");
       option.value = store;
       option.textContent = store;
-      storeDropdown.appendChild(option);
+      selector.appendChild(option);
     });
-    storeDropdown.addEventListener('change', updateGroceryDisplay);
   }
 
-  // Add product
-  document.getElementById('addProductBtn').addEventListener('click', () => {
-    const input = document.getElementById('productInput');
-    const name = input.value.trim().toLowerCase();
-    if (name) {
-      if (!groceryList.some(item => item.name === name)) {
-        groceryList.push({ name, quantity: 1 });
-        updateGroceryDisplay();
-      }
-      input.value = '';
-    }
+  document.getElementById("addGroceryBtn").addEventListener("click", () => {
+    addToGroceryList(apiData);
   });
-
-  // Clear list
-  clearListBtn.addEventListener('click', () => {
-    groceryList = [];
-    updateGroceryDisplay();
-  });
-
-  function updateGroceryDisplay() {
-    const selectedStore = storeDropdown.value;
-    groceryListItems.innerHTML = '';
-    let total = 0;
-
-    groceryList.forEach((item, index) => {
-      const entry = groceryData.find(
-        e => e['Product Name']?.toLowerCase() === item.name && e['Store Name (Accurate Spelling)'] === selectedStore
-      );
-
-      const li = document.createElement('li');
-
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = item.name.charAt(0).toUpperCase() + item.name.slice(1) + ' - ';
-
-      const quantityInput = document.createElement('input');
-      quantityInput.type = 'number';
-      quantityInput.min = '1';
-      quantityInput.value = item.quantity;
-      quantityInput.style.width = '40px';
-      quantityInput.addEventListener('change', (e) => {
-        item.quantity = parseInt(e.target.value) || 1;
-        updateGroceryDisplay();
-      });
-
-      const price = entry && entry['Price (CAD)'] ? parseFloat(entry['Price (CAD)']) : null;
-      const priceText = price ? `$${(price * item.quantity).toFixed(2)}` : 'N/A';
-
-      if (price) total += price * item.quantity;
-
-      const removeBtn = document.createElement('button');
-      removeBtn.textContent = 'Remove';
-      removeBtn.style.marginLeft = '10px';
-      removeBtn.addEventListener('click', () => {
-        groceryList.splice(index, 1);
-        updateGroceryDisplay();
-      });
-
-      li.appendChild(nameSpan);
-      li.appendChild(document.createTextNode('Qty: '));
-      li.appendChild(quantityInput);
-      li.appendChild(document.createTextNode(` | Price: ${priceText}`));
-      li.appendChild(removeBtn);
-      groceryListItems.appendChild(li);
-    });
-
-    totalPriceElement.textContent = `Total (before tax): $${total.toFixed(2)}`;
-  }
 });
+
+function addToGroceryList(apiData) {
+  const productInput = document.getElementById("groceryInput").value.trim();
+  const quantity = parseInt(document.getElementById("quantityInput").value) || 1;
+  const selectedStore = document.getElementById("storeSelector").value;
+  const table = document.getElementById("groceryListTable").getElementsByTagName("tbody")[0];
+
+  if (!productInput) return;
+
+  const matchingItems = apiData.filter(
+    (item) =>
+      item["Product Name"] &&
+      item["Product Name"].toLowerCase() === productInput.toLowerCase()
+  );
+
+  let productData = {
+    Product: productInput,
+    Brand: "N/A",
+    Weight: "N/A",
+    Unit: "N/A",
+    Price: "N/A"
+  };
+
+  for (let item of matchingItems) {
+    if (
+      item["Store Name (Accurate Spelling)"] &&
+      item["Store Name (Accurate Spelling)"].toLowerCase() === selectedStore.toLowerCase()
+    ) {
+      productData = {
+        Product: item["Product Name"] || productInput,
+        Brand: item["Brand (Optional)"] || "N/A",
+        Weight: item["Weight Number (Optional)"] || "N/A",
+        Unit: item["Weight (Optional)"] || "N/A",
+        Price: parseFloat(item["Price (CAD)"]) || "N/A"
+      };
+      break;
+    }
+  }
+
+  const totalPrice =
+    productData.Price !== "N/A" ? (productData.Price * quantity).toFixed(2) : "N/A";
+
+  const row = table.insertRow();
+  row.innerHTML = `
+    <td>${productData.Product}</td>
+    <td>${productData.Brand}</td>
+    <td>${productData.Weight}</td>
+    <td>${productData.Unit}</td>
+    <td>${productData.Price !== "N/A" ? "$" + productData.Price.toFixed(2) : "N/A"}</td>
+    <td>${quantity}</td>
+    <td>${totalPrice !== "N/A" ? "$" + totalPrice : "N/A"}</td>
+  `;
+
+  updateGroceryTotal();
+}
+
+function updateGroceryTotal() {
+  const table = document.getElementById("groceryListTable").getElementsByTagName("tbody")[0];
+  let total = 0;
+
+  for (let row of table.rows) {
+    const totalCell = row.cells[6].innerText;
+    if (totalCell !== "N/A") {
+      total += parseFloat(totalCell.replace("$", ""));
+    }
+  }
+
+  document.getElementById("groceryTotal").innerText = `Total: $${total.toFixed(2)}`;
+}

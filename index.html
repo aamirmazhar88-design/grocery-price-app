@@ -2,60 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Grocery Price Comparison</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
+    h1 { color: #333; }
+    .tab-button { margin-right: 10px; padding: 10px; background-color: #ccc; border: none; cursor: pointer; }
+    .tab-button.active { background-color: #888; color: #fff; }
+    .tab-content { display: none; margin-top: 20px; }
+    .tab-content.active { display: block; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; background: white; }
+    th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: left; }
+    input[type="text"] { padding: 6px; width: 300px; }
+  </style>
 </head>
 <body>
 
-  <h1>🛒 Grocery Price Comparison</h1>
+  <h1>Grocery Price App</h1>
 
-  <div class="tabs">
-    <button onclick="showTab('comparison')">Comparison</button>
-    <button onclick="showTab('grocery')">Grocery List</button>
-  </div>
+  <button class="tab-button active" onclick="showTab('comparison')">Comparison</button>
+  <button class="tab-button" onclick="showTab('list')">Grocery List</button>
 
-  <!-- COMPARISON TAB -->
-  <div id="comparison" class="tab">
+  <!-- Comparison Tab -->
+  <div id="comparison" class="tab-content active">
     <h2>Compare Prices</h2>
-
-    <label>Select Product:</label>
-    <select id="comparisonProduct" onchange="renderComparison()"></select>
-
-    <table>
+    <input type="text" id="productSearch" placeholder="Enter product name (e.g., Milk)" oninput="filterComparison()" />
+    <table id="comparisonTable">
       <thead>
         <tr>
-          <th>Product</th>
-          <th>Store</th>
+          <th>Product Name</th>
           <th>Price (CAD)</th>
+          <th>Store Name</th>
+          <th>Brand (Optional)</th>
+          <th>Category</th>
         </tr>
       </thead>
-      <tbody id="comparisonTable"></tbody>
+      <tbody></tbody>
     </table>
   </div>
 
-  <!-- GROCERY LIST TAB -->
-  <div id="grocery" class="tab hidden">
-    <h2>Grocery List</h2>
-
-    <label>Select Store:</label>
-    <select id="storeSelect" onchange="renderGroceryList()"></select>
-
-    <label>Select Products:</label>
-    <select id="groceryProducts" multiple onchange="renderGroceryList()"></select>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Price (CAD)</th>
-        </tr>
-      </thead>
-      <tbody id="groceryTable"></tbody>
-    </table>
-
-    <h3>Total: $<span id="totalPrice">0.00</span></h3>
+  <!-- Grocery List Tab -->
+  <div id="list" class="tab-content">
+    <h2>Your Grocery List</h2>
+    <input type="text" id="productAdd" placeholder="Enter product name" />
+    <button onclick="addToList()">Add</button>
+    <ul id="groceryList"></ul>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const apiURL = "https://api.sheetbest.com/sheets/478547a5-a8cd-41c0-83d4-089ac019697d";
+    let allData = [];
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+    }
+
+    function fetchData() {
+      fetch(apiURL)
+        .then(response => response.json())
+        .then(data => {
+          allData = data;
+          displayComparison(data);
+        });
+    }
+
+    function displayComparison(data) {
+      const tbody = document.querySelector("#comparisonTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row["Product Name"]}</td>
+          <td>${row["Price (CAD)"]}</td>
+          <td>${row["Store Name (Accurate Spelling)"]}</td>
+          <td>${row["Brand (Optional)"]}</td>
+          <td>${row["Category"]}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterComparison() {
+      const query = document.getElementById("productSearch").value.toLowerCase();
+      const filtered = allData.filter(row => 
+        row["Product Name"]?.toLowerCase().includes(query)
+      );
+      displayComparison(filtered);
+    }
+
+    function addToList() {
+      const item = document.getElementById("productAdd").value;
+      if (item.trim() !== "") {
+        const li = document.createElement("li");
+        li.textContent = item;
+        document.getElementById("groceryList").appendChild(li);
+        document.getElementById("productAdd").value = "";
+      }
+    }
+
+    fetchData();
+  </script>
+
 </body>
 </html>

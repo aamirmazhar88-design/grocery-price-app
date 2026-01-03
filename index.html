@@ -1,83 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Grocery Price Comparison</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Grocery Price Comparison</h1>
+  <div class="tabs">
+    <button onclick="showTab('entry')">Data Entry</button>
+    <button onclick="showTab('compare')">Comparison</button>
+    <button onclick="showTab('list')">Grocery List</button>
+  </div>
 
-    <div class="tabs">
-      <button class="tab-button active" data-tab="comparison">Comparison</button>
-      <button class="tab-button" data-tab="grocery">Grocery List</button>
-    </div>
+  <div id="entry" class="tab">
+    <h2>Data Entry</h2>
+    <input type="text" id="category" placeholder="Category (e.g., Dairy)">
+    <input type="text" id="product" placeholder="Product Name (e.g., Milk)">
+    <input type="text" id="brand" placeholder="Brand (Optional)">
+    <input type="text" id="weight" placeholder="Weight (e.g., 1)">
+    <select id="unit">
+      <option value="">Unit (Optional)</option>
+      <option value="kg">kg</option>
+      <option value="lb">lb</option>
+    </select>
+    <input type="number" id="price" placeholder="Price (Include VAT)">
+    <input type="text" id="store" placeholder="Store Name">
+    <input type="text" id="location" placeholder="Store Location (Optional)">
+    <button onclick="submitData()">Submit</button>
+  </div>
 
-    <!-- Comparison Tab -->
-    <div id="comparison" class="tab-content active">
-      <table id="comparisonTable">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Product</th>
-            <th>Brand</th>
-            <th>Weight</th>
-            <th>Price (CAD)</th>
-            <th>Store</th>
-            <th>Location</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+  <div id="compare" class="tab hidden">
+    <h2>Compare Prices</h2>
+    <input type="text" id="compareInput" placeholder="Enter product name">
+    <button onclick="comparePrices()">Compare</button>
+    <div id="comparisonResults"></div>
+  </div>
 
-    <!-- Grocery List Tab -->
-    <div id="grocery" class="tab-content">
-      <div class="input-group">
-        <input type="text" id="groceryInput" placeholder="Enter product name" />
-        <input type="number" id="quantityInput" placeholder="Quantity" min="1" value="1" />
-        <select id="storeSelector">
-          <option value="">Select store</option>
-        </select>
-        <button id="addGroceryBtn">Add to Grocery List</button>
-      </div>
-
-      <table id="groceryListTable">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Brand</th>
-            <th>Weight</th>
-            <th>Unit</th>
-            <th>Price (CAD)</th>
-            <th>Quantity</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <div id="groceryTotal">Total: $0.00</div>
-    </div>
+  <div id="list" class="tab hidden">
+    <h2>Grocery List</h2>
+    <input type="text" id="listInput" placeholder="Enter product name">
+    <button onclick="addToList()">Add</button>
+    <div id="groceryListResults"></div>
   </div>
 
   <script src="script.js"></script>
-  <script>
-    // Simple tab toggle logic
-    const tabButtons = document.querySelectorAll(".tab-button");
-    const tabContents = document.querySelectorAll(".tab-content");
-
-    tabButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        tabButtons.forEach((btn) => btn.classList.remove("active"));
-        tabContents.forEach((tab) => tab.classList.remove("active"));
-
-        button.classList.add("active");
-        document.getElementById(button.dataset.tab).classList.add("active");
-      });
-    });
-  </script>
 </body>
 </html>

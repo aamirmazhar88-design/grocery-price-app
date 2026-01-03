@@ -2,21 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grocery Price Comparison</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <h1>🛒 Grocery Price Comparison</h1>
-  
-  <div id="tabs">
+
+  <div class="tabs">
     <button onclick="showTab('comparison')">Comparison</button>
-    <button onclick="showTab('list')">Grocery List</button>
+    <button onclick="showTab('grocery')">Grocery List</button>
   </div>
 
-  <div id="content">
-    <div id="comparison" class="tab-content"></div>
-    <div id="list" class="tab-content" style="display:none;"></div>
+  <!-- COMPARISON TAB -->
+  <div id="comparison" class="tab">
+    <h2>Compare Prices</h2>
+
+    <label>Select Product:</label>
+    <select id="comparisonProduct" onchange="renderComparison()"></select>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Store</th>
+          <th>Price (CAD)</th>
+        </tr>
+      </thead>
+      <tbody id="comparisonTable"></tbody>
+    </table>
+  </div>
+
+  <!-- GROCERY LIST TAB -->
+  <div id="grocery" class="tab hidden">
+    <h2>Grocery List</h2>
+
+    <label>Select Store:</label>
+    <select id="storeSelect" onchange="renderGroceryList()"></select>
+
+    <label>Select Products:</label>
+    <select id="groceryProducts" multiple onchange="renderGroceryList()"></select>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price (CAD)</th>
+        </tr>
+      </thead>
+      <tbody id="groceryTable"></tbody>
+    </table>
+
+    <h3>Total: $<span id="totalPrice">0.00</span></h3>
   </div>
 
   <script src="script.js"></script>

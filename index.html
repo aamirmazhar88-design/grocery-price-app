@@ -3,108 +3,280 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Grocery Price Comparison</title>
+  <title>Grocery Price App</title>
+
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
-    h1 { color: #333; }
-    .tab-button { margin-right: 10px; padding: 10px; background-color: #ccc; border: none; cursor: pointer; }
-    .tab-button.active { background-color: #888; color: #fff; }
-    .tab-content { display: none; margin-top: 20px; }
-    .tab-content.active { display: block; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; background: white; }
-    th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: left; }
-    input[type="text"] { padding: 6px; width: 300px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    .tab-button {
+      margin-right: 10px;
+      padding: 10px 16px;
+      background-color: #ddd;
+      border: none;
+      cursor: pointer;
+    }
+
+    .tab-button.active {
+      background-color: #555;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    input[type="text"], select, input[type="number"] {
+      padding: 6px;
+      margin-right: 6px;
+    }
+
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    li {
+      margin-bottom: 8px;
+      background: white;
+      padding: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .remove-btn {
+      margin-left: 10px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+    }
+
+    .clear-btn {
+      background: #444;
+      color: white;
+      margin-top: 10px;
+    }
   </style>
 </head>
+
 <body>
 
-  <h1>Grocery Price App</h1>
+<h1>🛒 Grocery Price App</h1>
 
-  <button class="tab-button active" onclick="showTab('comparison')">Comparison</button>
-  <button class="tab-button" onclick="showTab('list')">Grocery List</button>
+<button class="tab-button active" onclick="showTab('comparison')">Comparison</button>
+<button class="tab-button" onclick="showTab('list')">Grocery List</button>
 
-  <!-- Comparison Tab -->
-  <div id="comparison" class="tab-content active">
-    <h2>Compare Prices</h2>
-    <input type="text" id="productSearch" placeholder="Enter product name (e.g., Milk)" oninput="filterComparison()" />
-    <table id="comparisonTable">
-      <thead>
-        <tr>
-          <th>Product Name</th>
-          <th>Price (CAD)</th>
-          <th>Store Name</th>
-          <th>Brand (Optional)</th>
-          <th>Category</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+<!-- ================= COMPARISON TAB ================= -->
+<div id="comparison" class="tab-content active">
+  <h2>Compare Prices</h2>
+
+  <input
+    type="text"
+    id="productSearch"
+    placeholder="Enter product name"
+    oninput="filterComparison()"
+  />
+
+  <table>
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Price (CAD)</th>
+        <th>Store Name</th>
+        <th>Brand</th>
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody id="comparisonBody"></tbody>
+  </table>
+</div>
+
+<!-- ================= GROCERY LIST TAB ================= -->
+<div id="list" class="tab-content">
+  <h2>Your Grocery List</h2>
+
+  <div>
+    <input type="text" id="productInput" placeholder="Enter product name" />
+    <button onclick="addProduct()">Add</button>
   </div>
 
-  <!-- Grocery List Tab -->
-  <div id="list" class="tab-content">
-    <h2>Your Grocery List</h2>
-    <input type="text" id="productAdd" placeholder="Enter product name" />
-    <button onclick="addToList()">Add</button>
-    <ul id="groceryList"></ul>
+  <div style="margin-top: 10px;">
+    <label><strong>Select Store:</strong></label>
+    <select id="storeDropdown" onchange="renderGroceryList()"></select>
   </div>
 
-  <script>
-    const apiURL = "https://api.sheetbest.com/sheets/478547a5-a8cd-41c0-83d4-089ac019697d";
-    let allData = [];
+  <ul id="groceryList"></ul>
 
-    function showTab(tabId) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+  <p><strong>Total (before tax):</strong> $<span id="totalPrice">0.00</span></p>
+
+  <button class="clear-btn" onclick="clearList()">Clear Grocery List</button>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv";
+
+let allData = [];
+let groceryItems = [];
+
+/* ================= TAB LOGIC ================= */
+function showTab(tabId) {
+  document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+
+  document.getElementById(tabId).classList.add("active");
+  document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add("active");
+}
+
+/* ================= LOAD CSV ================= */
+fetch(CSV_URL)
+  .then(res => res.text())
+  .then(csv => {
+    const rows = csv.split("\n").map(r => r.split(","));
+    const headers = rows[0];
+
+    allData = rows.slice(1).map(row => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h.trim()] = row[i]?.trim() || "");
+      return obj;
+    });
+
+    populateStores();
+    renderComparison(allData);
+  });
+
+/* ================= COMPARISON ================= */
+function renderComparison(data) {
+  const body = document.getElementById("comparisonBody");
+  body.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row["Product Name"]}</td>
+      <td>${row["Price (CAD)"]}</td>
+      <td>${row["Store Name (Accurate Spelling)"]}</td>
+      <td>${row["Brand (Optional)"]}</td>
+      <td>${row["Category"]}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function filterComparison() {
+  const q = document.getElementById("productSearch").value.toLowerCase();
+  renderComparison(
+    allData.filter(r => r["Product Name"].toLowerCase().includes(q))
+  );
+}
+
+/* ================= STORES ================= */
+function populateStores() {
+  const stores = [...new Set(allData.map(r => r["Store Name (Accurate Spelling)"]))];
+  const dropdown = document.getElementById("storeDropdown");
+
+  dropdown.innerHTML = "<option value=''>-- Select Store --</option>";
+  stores.forEach(store => {
+    const opt = document.createElement("option");
+    opt.value = store;
+    opt.textContent = store;
+    dropdown.appendChild(opt);
+  });
+}
+
+/* ================= GROCERY LIST ================= */
+function addProduct() {
+  const input = document.getElementById("productInput");
+  const name = input.value.trim().toLowerCase();
+  if (!name) return;
+
+  if (!groceryItems.find(i => i.name === name)) {
+    groceryItems.push({ name, qty: 1 });
+    renderGroceryList();
+  }
+  input.value = "";
+}
+
+function renderGroceryList() {
+  const ul = document.getElementById("groceryList");
+  const store = document.getElementById("storeDropdown").value;
+  ul.innerHTML = "";
+  let total = 0;
+
+  groceryItems.forEach((item, index) => {
+    const match = allData.find(
+      r =>
+        r["Product Name"].toLowerCase() === item.name &&
+        r["Store Name (Accurate Spelling)"] === store
+    );
+
+    let priceText = "N/A";
+    if (match && match["Price (CAD)"]) {
+      const price = parseFloat(match["Price (CAD)"]) * item.qty;
+      total += price;
+      priceText = `$${price.toFixed(2)}`;
     }
 
-    function fetchData() {
-      fetch(apiURL)
-        .then(response => response.json())
-        .then(data => {
-          allData = data;
-          displayComparison(data);
-        });
-    }
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <strong>${item.name}</strong>
+      | Qty:
+      <input type="number" min="1" value="${item.qty}"
+        onchange="updateQty(${index}, this.value)" />
+      | Price: ${priceText}
+      <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+    `;
+    ul.appendChild(li);
+  });
 
-    function displayComparison(data) {
-      const tbody = document.querySelector("#comparisonTable tbody");
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row["Product Name"]}</td>
-          <td>${row["Price (CAD)"]}</td>
-          <td>${row["Store Name (Accurate Spelling)"]}</td>
-          <td>${row["Brand (Optional)"]}</td>
-          <td>${row["Category"]}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+  document.getElementById("totalPrice").textContent = total.toFixed(2);
+}
 
-    function filterComparison() {
-      const query = document.getElementById("productSearch").value.toLowerCase();
-      const filtered = allData.filter(row => 
-        row["Product Name"]?.toLowerCase().includes(query)
-      );
-      displayComparison(filtered);
-    }
+function updateQty(index, value) {
+  groceryItems[index].qty = parseInt(value) || 1;
+  renderGroceryList();
+}
 
-    function addToList() {
-      const item = document.getElementById("productAdd").value;
-      if (item.trim() !== "") {
-        const li = document.createElement("li");
-        li.textContent = item;
-        document.getElementById("groceryList").appendChild(li);
-        document.getElementById("productAdd").value = "";
-      }
-    }
+function removeItem(index) {
+  groceryItems.splice(index, 1);
+  renderGroceryList();
+}
 
-    fetchData();
-  </script>
+function clearList() {
+  groceryItems = [];
+  renderGroceryList();
+}
+</script>
 
 </body>
 </html>

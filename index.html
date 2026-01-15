@@ -9,6 +9,7 @@
 <body>
   <h1>🛒 Grocery Price App</h1>
 
+  <!-- Tabs -->
   <div class="tabs">
     <button class="tab-button active" onclick="showTab('comparisonTab')">Comparison</button>
     <button class="tab-button" onclick="showTab('groceryListTab')">Grocery List</button>
@@ -41,6 +42,7 @@
       <button onclick="searchProduct()">Search</button>
     </div>
 
+    <!-- Suggestions Table -->
     <div id="suggestionSection" class="hidden">
       <h3>Select Product Type:</h3>
       <table>
@@ -56,6 +58,7 @@
       <button onclick="addSelectedToGroceryList()">Add to Grocery List</button>
     </div>
 
+    <!-- Store Selection -->
     <div style="margin-top: 20px;">
       <label><strong>Select Store:</strong></label>
       <select id="storeDropdown" onchange="renderGroceryList()">
@@ -63,6 +66,7 @@
       </select>
     </div>
 
+    <!-- Grocery List Table -->
     <table style="margin-top: 20px;">
       <thead>
         <tr>

@@ -2,9 +2,8 @@ const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv";
 
 let allData = [];
-let groceryItems = [];
+let groceryList = [];
 
-/* ================= TAB SWITCH ================= */
 function showTab(tabId) {
   document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
@@ -12,7 +11,6 @@ function showTab(tabId) {
   document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add("active");
 }
 
-/* ================= LOAD CSV ================= */
 fetch(CSV_URL)
   .then(res => res.text())
   .then(csv => {
@@ -29,11 +27,9 @@ fetch(CSV_URL)
     renderComparison(allData);
   });
 
-/* ================= STORES ================= */
 function populateStores() {
   const stores = [...new Set(allData.map(r => r["Store Name (Accurate Spelling)"]))];
   const dropdown = document.getElementById("storeDropdown");
-
   dropdown.innerHTML = "<option value=''>Select Store</option>";
   stores.forEach(store => {
     const opt = document.createElement("option");
@@ -43,7 +39,6 @@ function populateStores() {
   });
 }
 
-/* ================= COMPARISON ================= */
 function renderComparison(data) {
   const body = document.getElementById("comparisonBody");
   body.innerHTML = "";
@@ -52,10 +47,10 @@ function renderComparison(data) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${row["Product Name"]}</td>
-      <td>${row["Brand (Optional)"]}</td>
-      <td>${row["Weight Number (Optional)"]} ${row["Weight (Optional)"]}</td>
-      <td>$${row["Price (CAD)"]}</td>
+      <td>${row["Price (CAD)"]}</td>
       <td>${row["Store Name (Accurate Spelling)"]}</td>
+      <td>${row["Brand (Optional)"]}</td>
+      <td>${row["Category"]}</td>
     `;
     body.appendChild(tr);
   });
@@ -63,39 +58,28 @@ function renderComparison(data) {
 
 function filterComparison() {
   const q = document.getElementById("productSearch").value.toLowerCase();
-  renderComparison(allData.filter(r =>
-    r["Product Name"].toLowerCase().includes(q)
-  ));
+  renderComparison(allData.filter(r => r["Product Name"].toLowerCase().includes(q)));
 }
 
-/* ================= MATCHING TABLE ================= */
-document.getElementById("productInput").addEventListener("input", () => {
-  const query = document.getElementById("productInput").value.toLowerCase();
-  const store = document.getElementById("storeDropdown").value;
-  const results = allData.filter(r =>
-    r["Product Name"].toLowerCase().includes(query) &&
-    (!store || r["Store Name (Accurate Spelling)"] === store)
-  );
-  renderMatches(results);
+// MATCH TABLE BASED ON INPUT
+const input = document.getElementById("productInput");
+input.addEventListener("input", () => {
+  const q = input.value.toLowerCase();
+  const results = [...new Map(
+    allData.filter(r => r["Product Name"].toLowerCase().includes(q))
+      .map(item => [item["Product Name"] + item["Brand (Optional)"], item])
+  ).values()];
+  renderMatchTable(results);
 });
 
-function renderMatches(results) {
+function renderMatchTable(results) {
   const container = document.getElementById("matchResults");
   container.innerHTML = "";
-
   if (!results.length) return;
 
   const table = document.createElement("table");
   table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Brand</th>
-        <th>Weight</th>
-        <th>Price</th>
-        <th></th>
-      </tr>
-    </thead>
+    <thead><tr><th>Product</th><th>Brand</th><th>Action</th></tr></thead>
     <tbody></tbody>
   `;
 
@@ -104,8 +88,6 @@ function renderMatches(results) {
     tr.innerHTML = `
       <td>${item["Product Name"]}</td>
       <td>${item["Brand (Optional)"]}</td>
-      <td>${item["Weight Number (Optional)"]} ${item["Weight (Optional)"]}</td>
-      <td>$${item["Price (CAD)"]}</td>
       <td><button onclick='addToList(${JSON.stringify(item)})'>Add</button></td>
     `;
     table.querySelector("tbody").appendChild(tr);
@@ -114,12 +96,8 @@ function renderMatches(results) {
   container.appendChild(table);
 }
 
-/* ================= CHECKLIST ================= */
 function addToList(item) {
-  groceryItems.push({
-    ...item,
-    qty: 1
-  });
+  groceryList.push({ ...item, quantity: 1 });
   document.getElementById("matchResults").innerHTML = "";
   document.getElementById("productInput").value = "";
   renderGroceryList();
@@ -127,12 +105,23 @@ function addToList(item) {
 
 function renderGroceryList() {
   const ul = document.getElementById("groceryList");
+  const store = document.getElementById("storeDropdown").value;
   ul.innerHTML = "";
   let total = 0;
 
-  groceryItems.forEach((item, index) => {
-    const price = parseFloat(item["Price (CAD)"]) * item.qty;
-    total += price;
+  groceryList.forEach((item, index) => {
+    const match = allData.find(r =>
+      r["Product Name"] === item["Product Name"] &&
+      r["Brand (Optional)"] === item["Brand (Optional)"] &&
+      r["Store Name (Accurate Spelling)"] === store
+    );
+
+    let priceText = "N/A";
+    if (match && match["Price (CAD)"]) {
+      const price = parseFloat(match["Price (CAD)"]) * item.quantity;
+      total += price;
+      priceText = `$${price.toFixed(2)}`;
+    }
 
     const li = document.createElement("li");
     li.innerHTML = `
@@ -143,9 +132,8 @@ function renderGroceryList() {
         <small>${item["Store Name (Accurate Spelling)"]}</small>
       </div>
       <div class="right">
-        Qty <input type="number" min="1" value="${item.qty}"
-          onchange="updateQty(${index}, this.value)">
-        <div>$${price.toFixed(2)}</div>
+        Qty <input type="number" min="1" value="${item.quantity}" onchange="updateQty(${index}, this.value)">
+        <div>${priceText}</div>
         <button onclick="removeItem(${index})">✕</button>
       </div>
     `;
@@ -156,16 +144,16 @@ function renderGroceryList() {
 }
 
 function updateQty(index, value) {
-  groceryItems[index].qty = parseInt(value) || 1;
+  groceryList[index].quantity = parseInt(value) || 1;
   renderGroceryList();
 }
 
 function removeItem(index) {
-  groceryItems.splice(index, 1);
+  groceryList.splice(index, 1);
   renderGroceryList();
 }
 
 function clearList() {
-  groceryItems = [];
+  groceryList = [];
   renderGroceryList();
 }

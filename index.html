@@ -58,7 +58,9 @@
 
     <div style="margin-top: 20px;">
       <label><strong>Select Store:</strong></label>
-      <select id="storeDropdown" onchange="renderGroceryList()"></select>
+      <select id="storeDropdown" onchange="renderGroceryList()">
+        <option value="">Select Store</option>
+      </select>
     </div>
 
     <table style="margin-top: 20px;">
@@ -82,9 +84,6 @@
     <button class="remove-btn" onclick="clearGroceryList()">Clear Grocery List</button>
   </div>
 
-  <script>
-    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv";
-  </script>
   <script src="script.js"></script>
 </body>
 </html>

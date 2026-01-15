@@ -1,70 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grocery Price App</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <h1>🛒 Grocery Price App</h1>
 
-<h1>🛒 Grocery Price App</h1>
-
-<div class="tabs">
-  <button class="tab-button active" onclick="showTab('comparison')">Comparison</button>
-  <button class="tab-button" onclick="showTab('list')">Grocery List</button>
-</div>
-
-<!-- ================= COMPARISON TAB ================= -->
-<div id="comparison" class="tab-content active">
-  <h2>Compare Prices</h2>
-
-  <input
-    type="text"
-    id="productSearch"
-    placeholder="Search product (e.g. Onion)"
-    oninput="filterComparison()"
-  />
-
-  <table>
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Brand</th>
-        <th>Weight</th>
-        <th>Price (CAD)</th>
-        <th>Store</th>
-      </tr>
-    </thead>
-    <tbody id="comparisonBody"></tbody>
-  </table>
-</div>
-
-<!-- ================= GROCERY LIST TAB ================= -->
-<div id="list" class="tab-content">
-
-  <h2>📝 Grocery Checklist</h2>
-
-  <div class="controls">
-    <input type="text" id="productInput" placeholder="Type product (e.g. Onion)">
-    <select id="storeDropdown"></select>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab('comparison')">Comparison</button>
+    <button class="tab-button" onclick="showTab('grocery')">Grocery List</button>
   </div>
 
-  <!-- MATCHING RESULTS -->
-  <div id="matchResults"></div>
-
-  <!-- CHECKLIST -->
-  <ul id="groceryList" class="checklist"></ul>
-
-  <div class="summary">
-    <strong>Total (before tax):</strong> $<span id="totalPrice">0.00</span>
+  <!-- ============== COMPARISON TAB ============== -->
+  <div id="comparison" class="tab-content active">
+    <h2>Compare Prices</h2>
+    <input type="text" id="productSearch" placeholder="Enter product name" oninput="filterComparison()">
+    <table>
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Price (CAD)</th>
+          <th>Store Name</th>
+          <th>Brand</th>
+          <th>Category</th>
+        </tr>
+      </thead>
+      <tbody id="comparisonBody"></tbody>
+    </table>
   </div>
 
-  <button class="clear-btn" onclick="clearList()">Clear Grocery List</button>
+  <!-- ============== GROCERY LIST TAB ============== -->
+  <div id="grocery" class="tab-content">
+    <h2>Your Grocery List</h2>
 
-</div>
+    <div class="controls">
+      <input type="text" id="productInput" placeholder="Type a product name..." />
+      <select id="storeDropdown" onchange="renderGroceryList()"></select>
+    </div>
 
-<script src="script.js"></script>
+    <div id="matchResults"></div>
+
+    <ul id="groceryList" class="checklist"></ul>
+
+    <p><strong>Total (before tax):</strong> $<span id="totalPrice">0.00</span></p>
+    <button class="clear-btn" onclick="clearList()">Clear Grocery List</button>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

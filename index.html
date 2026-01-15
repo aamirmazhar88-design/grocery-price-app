@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grocery Price App</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <h1>🛒 Grocery Price App</h1>
 
   <div class="tabs">
@@ -62,7 +61,7 @@
       <select id="storeDropdown" onchange="renderGroceryList()"></select>
     </div>
 
-    <table class="grocery-table">
+    <table style="margin-top: 20px;">
       <thead>
         <tr>
           <th>Product</th>
@@ -83,7 +82,9 @@
     <button class="remove-btn" onclick="clearGroceryList()">Clear Grocery List</button>
   </div>
 
+  <script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv";
+  </script>
   <script src="script.js"></script>
-
 </body>
 </html>

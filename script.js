@@ -1,44 +1,42 @@
-// script.js
-
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv';
-
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0HqnwgJkdwjTH2FI092uGK9-RsBfk-9OUGuQaAHhqbXHYtC2-PuVXwWI8JYQPVkCUSuaX1I_GHz-T/pub?output=csv";
 let allData = [];
 let groceryList = [];
 
-// ========== Load CSV Data ==========
-fetch(SHEET_CSV_URL)
-  .then(res => res.text())
-  .then(csv => {
-    const [headerLine, ...lines] = csv.trim().split('\n');
-    const headers = headerLine.split(',').map(h => h.trim());
+async function loadCSVData() {
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const rows = text.split("\n").map(row => row.split(","));
+  const headers = rows.shift();
 
-    allData = lines.map(line => {
-      const values = line.split(',');
-      let entry = {};
-      headers.forEach((h, i) => entry[h] = values[i]?.trim() || '');
-      return entry;
+  allData = rows.map(row => {
+    const item = {};
+    headers.forEach((header, i) => {
+      item[header.trim()] = row[i]?.trim() || "";
     });
-
-    renderComparison(allData);
-    populateStoreDropdown();
+    return item;
   });
 
-// ========== Tabs ==========
-function showTab(tabId) {
-  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-
-  document.getElementById(tabId).classList.add('active');
-  const btn = [...document.querySelectorAll('.tab-button')].find(b => b.textContent.toLowerCase().includes(tabId.includes('comparison') ? 'comparison' : 'grocery'));
-  if (btn) btn.classList.add('active');
+  renderComparisonTable();
+  populateStoreDropdown();
 }
 
-// ========== Comparison ==========
-function renderComparison(data) {
-  const tbody = document.getElementById("comparisonResult");
-  tbody.innerHTML = '';
+// === Tab Switching ===
+function showTab(tabId) {
+  document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+  document.getElementById(tabId).classList.add("active");
 
-  data.forEach(row => {
+  document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+  const index = tabId === 'comparisonTab' ? 0 : 1;
+  document.querySelectorAll(".tab-button")[index].classList.add("active");
+}
+
+// === Comparison Tab ===
+function renderComparisonTable(filter = "") {
+  const tbody = document.getElementById("comparisonResult");
+  tbody.innerHTML = "";
+
+  const filtered = allData.filter(item => item["Product Name"]?.toLowerCase().includes(filter.toLowerCase()));
+  filtered.forEach(row => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${row["Product Name"]}</td>
@@ -51,102 +49,88 @@ function renderComparison(data) {
   });
 }
 
-document.getElementById("comparisonSearch").addEventListener("input", function () {
-  const q = this.value.toLowerCase();
-  const filtered = allData.filter(r => r["Product Name"].toLowerCase().includes(q));
-  renderComparison(filtered);
+document.getElementById("comparisonSearch").addEventListener("input", (e) => {
+  renderComparisonTable(e.target.value);
 });
 
-// ========== Store Dropdown ==========
-function populateStoreDropdown() {
-  const dropdown = document.getElementById("storeDropdown");
-  const stores = [...new Set(allData.map(r => r["Store Name (Accurate Spelling)"]).filter(Boolean))];
-  dropdown.innerHTML = '<option value="">-- Select Store --</option>';
-  stores.forEach(store => {
-    const opt = document.createElement("option");
-    opt.value = store;
-    opt.textContent = store;
-    dropdown.appendChild(opt);
-  });
-}
-
-// ========== Grocery List Tab ==========
+// === Grocery List Tab ===
 function searchProduct() {
-  const input = document.getElementById('searchInput');
-  const keyword = input.value.trim().toLowerCase();
-  const results = allData.filter(row => row["Product Name"].toLowerCase().includes(keyword));
+  const input = document.getElementById("searchInput").value.trim().toLowerCase();
+  const suggestions = allData.filter(row =>
+    row["Product Name"].toLowerCase().includes(input)
+  );
 
-  const suggestionTable = document.getElementById('suggestionTable');
-  suggestionTable.innerHTML = '';
+  const table = document.getElementById("suggestionTable");
+  table.innerHTML = "";
 
-  if (results.length > 0) {
-    document.getElementById('suggestionSection').classList.remove('hidden');
-    results.forEach((row, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input type="checkbox" data-index="${index}" data-name="${row["Product Name"]}" data-brand="${row["Brand (Optional)"]}" data-weight="${row["Weight Number (Optional)"]} ${row["Weight (Optional)"]}"></td>
-        <td>${row["Product Name"]}</td>
-        <td>${row["Brand (Optional)"]}</td>
-      `;
-      suggestionTable.appendChild(tr);
-    });
-  } else {
-    document.getElementById('suggestionSection').classList.add('hidden');
-  }
+  suggestions.forEach((row, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="checkbox" data-index="${allData.indexOf(row)}"></td>
+      <td>${row["Product Name"]}</td>
+      <td>${row["Brand (Optional)"]}</td>
+    `;
+    table.appendChild(tr);
+  });
+
+  document.getElementById("suggestionSection").classList.remove("hidden");
 }
 
 function addSelectedToGroceryList() {
-  const checkboxes = document.querySelectorAll('#suggestionTable input[type="checkbox"]:checked');
+  const checkboxes = document.querySelectorAll("#suggestionTable input[type='checkbox']:checked");
   checkboxes.forEach(cb => {
-    const name = cb.dataset.name;
-    const brand = cb.dataset.brand;
-    const weight = cb.dataset.weight;
-    if (!groceryList.some(item => item.name === name && item.brand === brand && item.weight === weight)) {
-      groceryList.push({ name, brand, weight, qty: 1 });
-    }
+    const item = allData[cb.dataset.index];
+    const exists = groceryList.some(p =>
+      p["Product Name"] === item["Product Name"] &&
+      p["Brand (Optional)"] === item["Brand (Optional)"]
+    );
+    if (!exists) groceryList.push(item);
   });
+
   renderGroceryList();
-  document.getElementById('suggestionSection').classList.add('hidden');
+}
+
+function populateStoreDropdown() {
+  const dropdown = document.getElementById("storeDropdown");
+  const stores = [...new Set(allData.map(r => r["Store Name (Accurate Spelling)"]))].sort();
+  dropdown.innerHTML = stores.map(store => `<option value="${store}">${store}</option>`).join("");
+  renderGroceryList();
 }
 
 function renderGroceryList() {
-  const tbody = document.getElementById("groceryListTable");
   const store = document.getElementById("storeDropdown").value;
-  tbody.innerHTML = '';
+  const table = document.getElementById("groceryListTable");
+  table.innerHTML = "";
   let total = 0;
 
-  groceryList.forEach((item, index) => {
-    const match = allData.find(r => r["Product Name"] === item.name && r["Brand (Optional)"] === item.brand && r["Store Name (Accurate Spelling)"] === store);
-    let priceText = 'N/A';
-    let priceVal = 0;
+  groceryList.forEach((item, idx) => {
+    const match = allData.find(p =>
+      p["Product Name"] === item["Product Name"] &&
+      p["Brand (Optional)"] === item["Brand (Optional)"] &&
+      p["Store Name (Accurate Spelling)"] === store
+    );
 
-    if (match && match["Price (CAD)"]) {
-      priceVal = parseFloat(match["Price (CAD)"]) * item.qty;
-      priceText = `$${priceVal.toFixed(2)}`;
-      total += priceVal;
-    }
+    const qty = 1;
+    const price = match ? parseFloat(match["Price (CAD)"]) : 0;
+    const subtotal = match ? price * qty : 0;
+    if (match) total += subtotal;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.name}</td>
-      <td>${item.brand}</td>
-      <td>${item.weight}</td>
-      <td><input type="number" min="1" value="${item.qty}" onchange="updateQty(${index}, this.value)" /></td>
-      <td>${priceText}</td>
-      <td><button onclick="removeItem(${index})">Remove</button></td>
+      <td>${item["Product Name"]}</td>
+      <td>${item["Brand (Optional)"]}</td>
+      <td>${match ? match["Weight Number (Optional)"] + " " + match["Weight (Optional)"] : "N/A"}</td>
+      <td>${qty}</td>
+      <td>${match ? `$${price.toFixed(2)}` : "N/A"}</td>
+      <td><button class="remove-btn" onclick="removeFromGroceryList(${idx})">X</button></td>
     `;
-    tbody.appendChild(tr);
+    table.appendChild(tr);
   });
 
   document.getElementById("totalPrice").textContent = total.toFixed(2);
 }
 
-function updateQty(index, value) {
-  groceryList[index].qty = parseInt(value) || 1;
-  renderGroceryList();
-}
-
-function removeItem(index) {
+function removeFromGroceryList(index) {
   groceryList.splice(index, 1);
   renderGroceryList();
 }
@@ -155,3 +139,8 @@ function clearGroceryList() {
   groceryList = [];
   renderGroceryList();
 }
+
+// === Init ===
+window.onload = () => {
+  loadCSVData();
+};

@@ -1,5 +1,3 @@
-// script.js
-
 const apiURL = "https://api.sheetbest.com/sheets/478547a5-a8cd-41c0-83d4-089ac019697d";
 let allData = [];
 let groceryList = [];

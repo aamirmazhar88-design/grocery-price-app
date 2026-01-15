@@ -1,98 +1,125 @@
 body {
-  font-family: "Segoe UI", sans-serif;
-  background: #f7f7f7;
+  font-family: Arial, sans-serif;
   padding: 20px;
-}
-
-h1, h2 {
+  background-color: #f9f9f9;
   color: #333;
 }
 
 .tabs {
-  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.tab-button {
+.tabs button {
   padding: 10px 16px;
-  margin-right: 8px;
-  background: #ddd;
   border: none;
+  background-color: #ddd;
   cursor: pointer;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
 }
 
-.tab-button.active {
-  background: #333;
+.tabs button.active {
+  background-color: #333;
   color: white;
 }
 
-.tab-content {
+.tab {
   display: none;
 }
 
-.tab-content.active {
+.tab.active {
   display: block;
 }
 
-.controls {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-input, select {
-  padding: 8px;
-  width: 100%;
-}
-
 table {
-  width: 100%;
-  background: white;
   border-collapse: collapse;
-  margin-bottom: 15px;
+  width: 100%;
+  margin-top: 15px;
+  background-color: white;
 }
 
 th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-.checklist {
-  list-style: none;
-  padding: 0;
-}
-
-.checklist li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  margin-bottom: 8px;
+  border: 1px solid #ccc;
   padding: 10px;
-  border-left: 5px solid #4caf50;
+  text-align: left;
 }
 
-.checklist small {
-  color: #666;
+th {
+  background-color: #f2f2f2;
 }
 
-.checklist .right {
-  text-align: right;
-}
-
-.checklist input[type="number"] {
-  width: 50px;
-}
-
-.summary {
+input[type="text"],
+input[type="number"],
+select {
+  padding: 8px;
+  width: 100%;
   margin-top: 10px;
-  font-size: 18px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
-.clear-btn {
-  margin-top: 10px;
-  background: #444;
-  color: white;
-  padding: 8px 14px;
+button {
+  padding: 8px 12px;
   border: none;
+  background-color: #444;
+  color: white;
+  border-radius: 4px;
   cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #222;
+}
+
+.grocery-list-table td {
+  vertical-align: middle;
+}
+
+.price-na {
+  color: #aaa;
+  font-style: italic;
+}
+
+.remove-btn {
+  background-color: #d9534f;
+  margin-left: 5px;
+}
+
+.remove-btn:hover {
+  background-color: #c9302c;
+}
+
+.total {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+#match-table {
+  margin-bottom: 30px;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  th, td {
+    font-size: 14px;
+    padding: 6px;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tabs button {
+    width: 100%;
+  }
 }
